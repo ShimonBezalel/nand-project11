@@ -553,17 +553,11 @@ class CompilationEngine():
         Compile let statement.
         """
         self.eat('let')
-        # self.num_spaces += 1
-        # self.write("<keyword> let </keyword>")
         symbol = self.tokenizer.identifier()
         segment = self.symbol_table.kind_of(symbol)
         index = self.symbol_table.index_of(symbol)
-        # if segment == "field":
-        #     # Using 'this'
-        #     self.writer.write_push(POINTER, 0)
-        #     self.writer.write_push(THIS, index)
-        # elif segment:
-        #     self.writer.write_push(segment, index)
+
+
         self.tokenizer.advance()
 
         used_eq = self.possible_array(symbol)
@@ -726,25 +720,21 @@ class CompilationEngine():
 
         if self.tokenizer.token_type() == Token_Types.symbol:
             if self.tokenizer.symbol() == '(':
-                # There is an open bracket
-                self.tokenizer.advance()
+                # There is an parentheses opening:
+                # self.tokenizer.advance()
+                self.eat("(")
                 self.compile_expression()
                 self.eat(")")
-                # if self.tokenizer.token_type() == Token_Types.symbol: # maybe use eat
-                #     if self.tokenizer.symbol() == ')':
-                #         self.tokenizer.advance()
-                # else:
-                #     raise Exception("There more '(' than ')', while compiling expression.")
 
                 if not from_op_term:
                     self.possible_op_term()
                 return
 
-        # There is no open bracket
+        # There is no parentheses opening:
         self.compile_term()
         self.possible_op_term()
 
-    def subroutineCall_continue(self, func, is_method):
+    def subroutineCall_continue(self, func, is_method, already_pushed = False):
         """
         After an identifier there can be a '.' or '(', otherwise it not function call
         (subroutineCall).
@@ -770,7 +760,9 @@ class CompilationEngine():
                 if segment == "field":
                     # self.writer.write_push(POINTER, 0)
                     segment = THIS
-                self.writer.write_push(segment, index)
+                if not already_pushed:
+                    self.writer.write_push(segment, index)
+
                 num_exp += 1
                 func = self.symbol_table.type_of(object) + "." + \
                        self.tokenizer.identifier()
@@ -839,9 +831,8 @@ class CompilationEngine():
             elif kind:
                 self.writer.write_push(kind, index)
 
-            is_object = True if index else False
             self.tokenizer.advance()
-            self.possible_identifier_continue(name, is_object)
+            self.possible_identifier_continue(name, (index != None))
 
         # If the token is an symbol
         elif type == Token_Types.symbol:
@@ -874,7 +865,7 @@ class CompilationEngine():
         if self.tokenizer.token_type() == Token_Types.symbol:
             if self.tokenizer.symbol() == '[':
                 self.eat('[')
-                self.compile_expression() # do i nead to make sure it's not const string?
+                self.compile_expression() # do i need to make sure it's not const string?
                 self.eat(']')
                 self.writer.write_arithmetic('add')
 
@@ -894,7 +885,7 @@ class CompilationEngine():
                 return
 
             try:
-                self.subroutineCall_continue(identifier_val, is_obj)
+                self.subroutineCall_continue(identifier_val, is_obj, already_pushed=True)
             except Exception:
                 # raise Exception("If there is a symbol in the token it have to be . or [ or (.")
                 return
