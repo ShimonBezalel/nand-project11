@@ -859,11 +859,12 @@ class CompilationEngine():
             if self.tokenizer.symbol() == '(':
                 self.compile_expression()
             elif self.tokenizer.symbol() in ["-", "~"]:
+                symbol = self.tokenizer.symbol()
                 # self.write("<symbol> " + self.tokenizer.symbol() + " </symbol>", use_buffer=True)
-                self.eat(self.tokenizer.symbol())
+                self.eat(symbol)
                 # self.write("<symbol> " + self.tokenizer.symbol() + " </symbol>")
                 self.compile_expression()
-                command = "neg" if self.tokenizer.symbol() == "-" else "not"
+                command = "neg" if symbol == "-" else "not"
                 self.writer.write_arithmetic(command)
             else:
                 # self.cleanbuffer()
