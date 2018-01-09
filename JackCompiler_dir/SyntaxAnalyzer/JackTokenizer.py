@@ -1,4 +1,11 @@
 """
+The Jack Tokenizer encapsulates a generator class, where a Jack classes is parsed in
+one go as a list of tokens.
+
+Requests to this tokenizer is done using the agreed upon API of "hasmoretokens()" and
+"advance()" functions.
+
+The class throws exceptions in any breech of API or illegal code in jack file.
 
 """
 from enum import Enum, unique
@@ -95,8 +102,10 @@ class Comp_Exp(Enum):
 
     """
     single_line_comment = re.compile("(\/\/.*)")
-    doc_string = re.compile("(\/\*\*((([^*])*([^/])*)|(([^/])*([^*])*))\*\/)")
-    # comment = re.compile("((\/\/.*)|(\/\*\*((([^*])*([^/])*)|(([^/])*([^*])*))\*\/))")
+    multi_line_comment = re.compile("\/\*.*\*\/", flags=re.DOTALL)
+    # doc_string = re.compile("(\/\*\*((([^*])*([^/])*)|(([^/])*([^*])*))\*\/)")
+    doc_string = re.compile("(\/\*\*)(.*)(\s*\*.*)*(\s*\*\/)")
+
     string_single_line = re.compile("(\"((\\\\\")|([^\"]))*\")")
     keywords = re.compile(gen_keywords())
     symbols = re.compile(gen_symbols())
@@ -140,12 +149,6 @@ class JackTokenizer():
         """
         return self.cur_pos < len(self.tokens) - 1
 
-        try:
-            self.cur_type, self.cur_val = self.token_gen.__next__()
-            self.wait = True
-            return True
-        except StopIteration:
-            return False
 
     def advance(self):
         """
@@ -157,10 +160,6 @@ class JackTokenizer():
         self.cur_type, self.cur_val = self.tokens[self.cur_pos]
         return
 
-        if self.wait:
-            self.wait = False
-        else:
-            self.cur_type, self.cur_val = self.token_gen.__next__()
 
     def token_type(self):
         """
@@ -215,15 +214,15 @@ class JackTokenizer():
 
     def token_gen(self):
         """
-
+        Prime generator function. This function parses the entire file as per jack
+        agreed upon grammar.
         :return:
         """
-        # while True:
-        while self.text:
+
+        while self.text:  # as long as there is some text left to parse.
             # In case of a token match, we yield it and substitute it from what is left
             # of the current line being read
             comment_match = Comp_Exp.single_line_comment.value.match(self.text)
-            # todo: needs good comment implementation and testing
             if comment_match:
                 self.text = self.text[comment_match.end():]
                 continue
@@ -231,6 +230,11 @@ class JackTokenizer():
             docstring_match = Comp_Exp.doc_string.value.match(self.text)
             if docstring_match:
                 self.text = self.text[docstring_match.end():]
+                continue
+
+            comment_match = Comp_Exp.multi_line_comment.value.match(self.text)
+            if comment_match:
+                self.text = self.text[comment_match.end():]
                 continue
 
             string_match = Comp_Exp.string_single_line.value.match(self.text)
@@ -293,7 +297,7 @@ class JackTokenizer():
             else:
                 raise StopIteration("found impossible situation: " + self.text)
 
-    def lookahead(self, token, steps = 1):
+    def lookahead(self, token, steps=1):
         """
         Looks to see if the given token is the next token in the list of tokens,
         up to "steps" number of steps forward. If the list limitation is exceeded by
