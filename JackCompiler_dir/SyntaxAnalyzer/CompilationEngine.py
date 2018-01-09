@@ -570,11 +570,16 @@ class CompilationEngine():
         if not used_eq:
             self.eat('=')
             self.compile_expression()
+            if segment == "field":
+                segment = "this"
+
+            self.writer.write_pop(segment, index)
 
         self.eat(';')
-        if segment == "field":
-            segment = "this"
-        self.writer.write_pop(segment, index)
+        # if segment == "field":
+        #     segment = "this"
+        #
+        # self.writer.write_pop(segment, index)
         # self.write("<symbol> ; </symbol>")
         # self.num_spaces -= 1
         # self.write("</letStatement>")
