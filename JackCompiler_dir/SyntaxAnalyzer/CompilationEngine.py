@@ -102,21 +102,15 @@ class CompilationEngine():
         Compiles a complete class
         :return:
         """
+        self.__reset_label_counter()
 
-
-        # self.write('class', delim=True)
-        # self.num_spaces += 1
-        # self.write_terminal(self.tokenizer.token_type().value, self.tokenizer.keyWord())
         self.eat('class')
         self.symbol_table = SymbolTable()
 
         t_type, self.class_name = self.tokenizer.token_type(), self.tokenizer.identifier()
-        # self.write_terminal(t_type.value, class_name)
 
         self.tokenizer.advance()
 
-        # t_type, symbol = self.tokenizer.token_type(), self.tokenizer.symbol()
-        # self.write_terminal(t_type.value, symbol)
         self.eat('{')
 
         t_type = self.tokenizer.token_type()
@@ -136,9 +130,6 @@ class CompilationEngine():
 
         # self.eat('}')
 
-        # self.write_terminal(t_type.value, self.tokenizer.symbol())
-        # self.num_spaces -= 1
-        # self.write('class', delim=True, end=True)
 
     def eat(self, string):
         """
@@ -164,9 +155,6 @@ class CompilationEngine():
         """
         Compiles a static declaration or a field declaration.
         """
-        # self.write("classVarDec", True)
-        # self.num_spaces += 1
-
         # First word is static or field.
 
         # should i check before if i can get a keyword?
@@ -240,7 +228,7 @@ class CompilationEngine():
         Compiles a complete method, function or constructor
         :return:
         """
-
+        self.__reset_label_counter()
         self.symbol_table.start_subroutine()
 
         subroutine_type = self.tokenizer.keyWord()
@@ -766,10 +754,11 @@ class CompilationEngine():
         symbol = self.tokenizer.symbol()
         num_exp = 0
         if symbol == '(':
+            self.writer.write_push(POINTER, 0)
             self.eat('(')
             num_exp += self.compile_expression_list() + 1
             self.eat(')')
-            self.writer.write_push(POINTER, 0)
+
             self.writer.write_call(self.class_name + "." + func, num_exp)
 
         elif symbol == '.':
@@ -779,7 +768,7 @@ class CompilationEngine():
                 segment, index = self.symbol_table.kind_of(object), self.symbol_table.index_of(object)
                 # what is happening if the kind is field?
                 if segment == "field":
-                    self.writer.write_push(POINTER, 0)
+                    # self.writer.write_push(POINTER, 0)
                     segment = THIS
                 self.writer.write_push(segment, index)
                 num_exp += 1
@@ -969,12 +958,6 @@ class CompilationEngine():
 
         return self.possible_more_expression() + 1
 
-    # def possible_more_expression(self, exp_count):
-    #     return self.possible_more_expression() + 1
-    #     # self.num_spaces -= 1
-    #     # self.write("expressionList", True, True)
-
-
     def possible_more_expression(self):
         """
         If the next token is a ',' than compile more expressions,
@@ -988,172 +971,20 @@ class CompilationEngine():
         self.compile_expression()
         return self.possible_more_expression() + 1
 
-
-#-------------------------------------------------------------------------------------
-    def write(self, statement, delim = False, end = False, new_line=True,
-              no_space = False, use_buffer=False):
-        """
-
-        :param statement:
-        :return:
-        """
-        if use_buffer:
-            self.output.write(self.buffer)
-            self.buffer = ""
-        if end:
-            statement = "/" + statement
-        if delim:
-            statement = "<" + statement + ">"
-        if not no_space:
-            statement = SPACE * self.num_spaces + statement
-        if new_line:
-            statement += END_LINE
-
-
-        self.output.write(statement)
-
-        # if delim:
-        #     self.output.write(TAB * self.num_spaces + "<" + statement + ">")
-        # else:
-
-        # if new_line:
-        #     self.output.write(END_LINE)
-
-    def write_terminal(self, t_type, arg):
-        """
-
-        :param t_type:
-        :param arg:
-        :return:
-        """
-        self.write(t_type, delim=True, new_line=False, no_space=False)
-        self.write(" " + arg + " ", delim=False, new_line=False, no_space=True)
-        self.write(t_type, delim=True, new_line=True, end=True, no_space=True)
-
-    def cleanbuffer(self):
-        self.num_spaces -= 1
-        self.buffer = ""
-
-
-
-    # def write_recursive(self, name, advance_lim=1):
-    #     """
-    #
-    #     :param name:
-    #     :param advance_lim:
-    #     :return:
-    #     """
-    #     self.write(name, num_tabs=self.indent)
-    #
-    #     self.indent += 1
-    #     self.call_single()
-    #     for _ in range(advance_lim - 1):
-    #         if self.tokenizer.has_more_tokens():
-    #             self.tokenizer.advance()
-    #             self.call_single()
-    #         else:
-    #             raise ValueError("expected more tokens")
-    #
-    #     # self.write(name + " " + arg, delim=False,
-    #     #            num_tabs=self.indent + 1)
-    #     self.write(name, num_tabs=self.indent, end=True)
-
-
-    # def write_recursive(self, type):
-    #     """
-    #
-    #     :param type:
-    #     :return:
-    #     """
-    #     self.write(type.value, num_tabs=self.indent)
-    #     self.indent += 1
-    #
-    #     # need some sort of termination in call compile
-    #     # or type specific implementation
-    #     self.full_recursion()
-    #
-    #     self.write(type.value, num_tabs=self.indent, end=True)
-
-
-
-    # def full_recursion(self):
-    #     """
-    #
-    #     :param token:
-    #     :return:
-    #     """
-    #     while self.tokenizer.has_more_tokens():
-    #         self.tokenizer.advance()
-    #
-    #         type = self.tokenizer.token_type()
-    #
-    #         terminal_arg = False
-    #
-    #         if type == Token_Types.keyword:
-    #             terminal_arg = self.tokenizer.keyWord()
-    #
-    #         if type == Token_Types.symbol:
-    #             terminal_arg = self.tokenizer.symbol()
-    #
-    #         if type == Token_Types.identifier:
-    #             terminal_arg = self.tokenizer.identifier()
-    #
-    #         if type == Token_Types.int_const:
-    #             terminal_arg = self.tokenizer.intVal()
-    #
-    #         if type == Token_Types.string_const:
-    #             terminal_arg = self.tokenizer.stringVal()
-    #
-    #         if terminal_arg:
-    #             self.write_terminal(type, terminal_arg)
-    #
-    #         else:
-    #             self.write_recursive(type)
-
-
-    # def call_single(self):
-    #     """
-    #
-    #     :return:
-    #     """
-    #     type = self.tokenizer.token_type()
-    #
-    #     terminal_arg = False
-    #
-    #     if type == Token_Types.keyword:
-    #         terminal_arg = self.tokenizer.keyWord()
-    #
-    #     if type == Token_Types.symbol:
-    #         terminal_arg = self.tokenizer.symbol()
-    #
-    #     if type == Token_Types.identifier:
-    #         terminal_arg = self.tokenizer.identifier()
-    #
-    #     if type == Token_Types.int_const:
-    #         terminal_arg = self.tokenizer.intVal()
-    #
-    #     if type == Token_Types.string_const:
-    #         terminal_arg = self.tokenizer.stringVal()
-    #
-    #     if terminal_arg:
-    #         self.write_terminal(type, terminal_arg)
-    #
-    #     else:
-    #         self.write_recursive(type)
-
     def __gen_while_label(self):
         self.__label_counter[WHILE] += 1
-        return ("WHILE_LOOP" + str(self.__label_counter[WHILE]), "WHILE_CONT" + str(
+        return ("WHILE_EXP" + str(self.__label_counter[WHILE]), "WHILE_END" + str(
             self.__label_counter[WHILE]))
 
 
     def __gen_if_label(self):
         self.__label_counter[IF] += 1
         return ("IF_TRUE" + str(self.__label_counter[IF]), "IF_FALSE" + str(
-            self.__label_counter[IF]), "IF_CONT" + str(self.__label_counter[IF]))
+            self.__label_counter[IF]), "IF_END" + str(self.__label_counter[IF]))
 
     def __reset_label_counter(self):
-        self.__label_counter = [0, 0]
+        self.__label_counter = [-1, -1]
+
 
 
 
