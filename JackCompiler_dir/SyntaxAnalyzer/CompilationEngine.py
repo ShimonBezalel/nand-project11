@@ -594,6 +594,10 @@ class CompilationEngine():
         # # self.write("<symbol> ] </symbol>")
         # Handling an array
         # Pushing the array name
+
+        self.compile_expression()
+        self.eat(']')
+
         kind, index = self.symbol_table.kind_of(symbol), self.symbol_table.index_of(symbol)
         if kind == "field":
             # Using 'this'
@@ -602,8 +606,6 @@ class CompilationEngine():
         elif kind:
             self.writer.write_push(kind, index)
 
-        self.compile_expression()
-        self.eat(']')
         self.writer.write_arithmetic('add')
 
         try:
@@ -829,12 +831,12 @@ class CompilationEngine():
         elif type == Token_Types.identifier:
             name = self.tokenizer.identifier()
             kind, index = self.symbol_table.kind_of(name), self.symbol_table.index_of(name)
-            if kind == "field":
-                # Using 'this'
-                # self.writer.write_push(POINTER, 0)
-                self.writer.write_push(THIS, index)
-            elif kind:
-                self.writer.write_push(kind, index)
+            if not self.tokenizer.lookahead('['):
+                if kind == "field":
+                    # Using 'this'
+                    self.writer.write_push(THIS, index)
+                elif kind:
+                    self.writer.write_push(kind, index)
 
             self.tokenizer.advance()
             self.possible_identifier_continue(name, (index != None))
@@ -845,14 +847,11 @@ class CompilationEngine():
                 self.compile_expression()
             elif self.tokenizer.symbol() in ["-", "~"]:
                 symbol = self.tokenizer.symbol()
-                # self.write("<symbol> " + self.tokenizer.symbol() + " </symbol>", use_buffer=True)
                 self.eat(symbol)
-                # self.write("<symbol> " + self.tokenizer.symbol() + " </symbol>")
                 self.compile_expression()
                 command = "neg" if symbol == "-" else "not"
                 self.writer.write_arithmetic(command)
             else:
-                # self.cleanbuffer()
                 raise Exception()
 
         else:
@@ -870,8 +869,17 @@ class CompilationEngine():
         if self.tokenizer.token_type() == Token_Types.symbol:
             if self.tokenizer.symbol() == '[':
                 self.eat('[')
-                self.compile_expression() # do i need to make sure it's not const string?
+                self.compile_expression()
                 self.eat(']')
+                # Adds the array address
+                kind = self.symbol_table.kind_of(identifier_val)
+                index = self.symbol_table.index_of(identifier_val)
+                if kind == "field":
+                    # Using 'this'
+                    self.writer.write_push(THIS, index)
+                elif kind:
+                    self.writer.write_push(kind, index)
+
                 self.writer.write_arithmetic('add')
 
                 try:
@@ -892,7 +900,6 @@ class CompilationEngine():
             try:
                 self.subroutineCall_continue(identifier_val, is_obj, already_pushed=True)
             except Exception:
-                # raise Exception("If there is a symbol in the token it have to be . or [ or (.")
                 return
 
     def possible_op_term(self):
