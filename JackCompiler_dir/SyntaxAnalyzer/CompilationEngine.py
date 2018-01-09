@@ -509,21 +509,18 @@ class CompilationEngine():
         """
         self.eat('do')
 
-
-        # self.num_spaces += 1
-        # self.write("<keyword> do </keyword>")
-
-        # is the check is necessary?  probably not..
-        # if type != Token_Types.identifier:
-        #     raise Exception()
-        # self.write("<identifier> " + self.tokenizer.identifier() + " </identifier>")
-
         # get variable / class name
-        num_of_expressions = 0
+        # num_of_expressions = 0
         call_apparatus = self.tokenizer.identifier()
         self.tokenizer.advance()
         self.subroutineCall_continue(call_apparatus, self.symbol_table.index_of(
             call_apparatus) != None)
+        self.eat(';')
+        # self.writer.write_call(call_apparatus, num_of_expressions)
+        self.writer.write_pop("temp", 0)
+
+
+
         # self.tokenizer.advance()  #todo: advance here or not?
         # If we encountered a variable or class name   (class.subroutine)
         # if self.tokenizer.lookahead("."):
@@ -558,9 +555,9 @@ class CompilationEngine():
 
         # self.writer.write_pop("temp", 0)
 
-        self.eat(';')
-        # self.writer.write_call(call_apparatus, num_of_expressions)
-        self.writer.write_pop("temp", 0)
+        # self.eat(';')
+        # # self.writer.write_call(call_apparatus, num_of_expressions)
+        # self.writer.write_pop("temp", 0)
 
 
     def compile_let(self):
@@ -848,7 +845,7 @@ class CompilationEngine():
             kind, index = self.symbol_table.kind_of(name), self.symbol_table.index_of(name)
             if kind == "field":
                 # Using 'this'
-                self.writer.write_push(POINTER, 0)
+                # self.writer.write_push(POINTER, 0)
                 self.writer.write_push(THIS, index)
             elif kind:
                 self.writer.write_push(kind, index)
