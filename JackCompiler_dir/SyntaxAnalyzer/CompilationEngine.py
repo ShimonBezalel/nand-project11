@@ -291,8 +291,6 @@ class CompilationEngine():
         self.eat("method")
 
         self.symbol_table.define("this", self.class_name, "argument")
-        # self.writer.write_push(ARGS, 0)
-        # self.writer.write_pop(POINTER, 0)
 
         return self.compile_func_signature()
 
