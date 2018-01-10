@@ -15,10 +15,6 @@ from JackCompiler_dir.SymbolTable import *
 from enum import Enum, unique
 
 
-# karin
-
-#shimmy
-
 
 END_LINE    = "\n"
 SPACE         = "  "
@@ -76,18 +72,13 @@ class CompilationEngine():
         self.symbol_table = SymbolTable()
         self.tokenizer = JackTokenizer(input_file)
 
-
-        # todo: Here we need to see if we open a new writer per class.
-
         self.writer = VMWriter.VMWriter(output_file)
         self.__reset_label_counter()
         self.num_spaces = 0
         self.buffer = ""
         self.symbol_table = SymbolTable()
-        # with open(output_file, 'w') as self.output:
         while self.tokenizer.has_more_tokens():
             self.tokenizer.advance()
-            # assert self.tokenizer.token_type() == Token_Types.keyword
             if self.tokenizer.keyWord() == 'class':
                 self.class_name = None
                 self.compile_class()
@@ -123,9 +114,6 @@ class CompilationEngine():
             else:
                 raise KeyError("Found statement that does not fit class declaration. ",
                                operation)
-
-            # self.tokenizer.advance()
-
             t_type = self.tokenizer.token_type()
 
         # self.eat('}')
@@ -148,7 +136,6 @@ class CompilationEngine():
         if value != string:
             raise Exception("Received '" + value +
                             "' which is not the expected string: '" + string + "'")
-        # assert value == string
         self.tokenizer.advance()
 
     def compile_class_var_dec(self):
@@ -162,7 +149,6 @@ class CompilationEngine():
         if var_kind not in ["static", "field"]:
             raise Exception("Cant compile class variable declaration without static of "
                             "field." + var_kind)
-        # self.write("<keyword> " + var_sort + " </keyword>")
         self.tokenizer.advance()
 
         # Second word is type.
@@ -196,10 +182,7 @@ class CompilationEngine():
 
         # It will always end with ';'
         self.eat(';')
-        # self.write("<symbol> ; </symbol>")
 
-        # self.num_spaces -= 1
-        # self.write("classVarDec", True, True)
 
     def possible_varName(self, var_type, var_kind):
         """
@@ -211,12 +194,6 @@ class CompilationEngine():
             # There is no varName
             return
         # There is a varName
-        # self.write("<symbol> , </symbol>")
-        # if self.tokenizer.token_type() != Token_Types.identifier:
-        #     raise Exception("Cant compile (class or not) variable declaration without varName" +
-        #                     " identifier after ',' .")
-
-        # self.write("<identifier> " + self.tokenizer.identifier() + " </identifier>")
         self.symbol_table.define(self.tokenizer.identifier(), var_type, var_kind)
         self.tokenizer.advance()
         self.possible_varName(var_type, var_kind)
@@ -451,19 +428,7 @@ class CompilationEngine():
         """
         Compile a sequence of 0 or more statements, not including the "{}".
         """
-        # if self.tokenizer.token_type() != Token_Types.keyword:
-        #     return
-        #     # raise Exception("Can't use compile_statement if the current token isn't a keyword.")
-        # statement = self.tokenizer.keyWord()
-        # if statement not in ['let', 'if', 'while', 'do', 'return']:
-        #     return
-        # self.write("statements", True)
-        # self.num_spaces += 1
-
         self.possible_single_statement()
-
-        # self.num_spaces -= 1
-        # self.write("statements", True, True)
 
     def possible_single_statement(self):
         """
@@ -471,10 +436,7 @@ class CompilationEngine():
         """
         if (self.tokenizer.token_type() == Token_Types.keyword and
                     self.tokenizer.keyWord() in STATEMENTS):
-
-        # if self.tokenizer.keyWord() in STATEMENTS:
             statement = self.tokenizer.keyWord()
-            # self.write(statement + "Statement", True)
             if statement == 'let':
                 self.compile_let()
             elif statement == 'if':
@@ -485,10 +447,8 @@ class CompilationEngine():
                 self.compile_do()
             elif statement == 'return':
                 self.compile_return()
-            # else:
-            #     raise Exception("Invalid statement.")
-            # self.write(statement + "Statement", True, True)
             self.possible_single_statement()
+
 
     def compile_do(self):
         """
@@ -498,55 +458,12 @@ class CompilationEngine():
         self.eat('do')
 
         # get variable / class name
-        # num_of_expressions = 0
         call_apparatus = self.tokenizer.identifier()
         self.tokenizer.advance()
-        self.subroutineCall_continue(call_apparatus, self.symbol_table.index_of(
-            call_apparatus) != None)
+        self.subroutineCall_continue(call_apparatus,
+                                     self.symbol_table.index_of(call_apparatus) != None)
         self.eat(';')
-        # self.writer.write_call(call_apparatus, num_of_expressions)
         self.writer.write_pop("temp", 0)
-
-
-
-        # self.tokenizer.advance()  #todo: advance here or not?
-        # If we encountered a variable or class name   (class.subroutine)
-        # if self.tokenizer.lookahead("."):
-        #     kind = self.symbol_table.kind_of(call_apparatus)
-        #     if kind:  # this is a recognized variable name
-        #         type = self.symbol_table.type_of(
-        #             call_apparatus)  # todo: what do i do with type
-        #         self.subroutineCall_continue(call_apparatus, True)
-        #
-        #         # index = self.symbol_table.index_of(call_apparatus)
-        #         # self.writer.write_push(kind, index)
-        #         # num_of_expressions += 1    # this adds a self arg as one of the arguments.
-        #         self.tokenizer.advance()
-        #         # self.eat(".")
-        #     else:   # this is an unrecognized class name
-        #         self.subroutineCall_continue(call_apparatus, False)
-        #         self.tokenizer.advance()
-        #         # self.eat(".")
-        #         # self.subroutineCall_continue(call_apparatus, False)
-        #         # call_apparatus += "." + self.tokenizer.identifier()
-        # else:  # encounters a subroutine only
-        #     self.subroutineCall_continue(call_apparatus, False)
-        #     self.writer.write_push(POINTER, 0)
-        #     # Add to this function name the class name
-        #     call_apparatus = self.class_name + "." + call_apparatus
-        #     num_of_expressions += 1 # todo: might need to remove an extra exp...
-        #     self.tokenizer.advance()
-        #
-        # self.eat('(')
-        # num_of_expressions += self.compile_expression_list()
-        # self.eat(')')
-
-        # self.writer.write_pop("temp", 0)
-
-        # self.eat(';')
-        # # self.writer.write_call(call_apparatus, num_of_expressions)
-        # self.writer.write_pop("temp", 0)
-
 
     def compile_let(self):
         """
@@ -556,7 +473,6 @@ class CompilationEngine():
         symbol = self.tokenizer.identifier()
         segment = self.symbol_table.kind_of(symbol)
         index = self.symbol_table.index_of(symbol)
-
 
         self.tokenizer.advance()
 
@@ -570,13 +486,6 @@ class CompilationEngine():
             self.writer.write_pop(segment, index)
 
         self.eat(';')
-        # if segment == "field":
-        #     segment = "this"
-        #
-        # self.writer.write_pop(segment, index)
-        # self.write("<symbol> ; </symbol>")
-        # self.num_spaces -= 1
-        # self.write("</letStatement>")
 
     def possible_array(self, symbol):
         """
@@ -587,13 +496,6 @@ class CompilationEngine():
         except:
             # There is no array
             return False
-        # # There is an array
-        # # self.write("<symbol> [ </symbol>")
-        # self.compile_expression()
-        # self.eat(']')
-        # # self.write("<symbol> ] </symbol>")
-        # Handling an array
-        # Pushing the array name
 
         self.compile_expression()
         self.eat(']')
@@ -665,10 +567,6 @@ class CompilationEngine():
 
         self.writer.write_return()
 
-        # self.write("<symbol> ; </symbol>")
-        # self.num_spaces -= 1
-
-
     def compile_if(self):
         """
         Compile if statement.
@@ -688,7 +586,6 @@ class CompilationEngine():
         self.eat('}')
         if self.tokenizer.token_type() == Token_Types.keyword:
             if self.tokenizer.keyWord() == "else":
-            # if self.tokenizer.lookahead("else"):
                 self.eat("else")
                 self.eat('{')
                 self.writer.write_goto(cont_label)
@@ -697,29 +594,9 @@ class CompilationEngine():
                 self.eat('}')
                 self.writer.write_label(cont_label)
                 return
-        # else:
         self.writer.write_label(false_label)
 
-    # def possible_else(self):
-    #     """
-    #     Compile 0 or 1 else sections.
-    #     """
-    #     try:
-    #         self.eat('else')
-    #     except:
-    #         # There is no else so we can return
-    #         return
-    #
-    #     # There is an else, so we handle it properly
-    #
-    #
-    #     self.eat('{')
-    #
-    #     self.compile_statements()
-    #     self.eat('}')
-
-
-    def compile_expression(self, from_op_term=False):
+    def compile_expression(self, from_op_term=False, greedy=True):
         """
         Compile an expression.
         :return:
@@ -739,7 +616,9 @@ class CompilationEngine():
 
         # There is no parentheses opening:
         self.compile_term()
-        self.possible_op_term()
+
+        if greedy:
+            self.possible_op_term()
 
     def subroutineCall_continue(self, func, is_method, already_pushed = False):
         """
@@ -848,7 +727,7 @@ class CompilationEngine():
             elif self.tokenizer.symbol() in ["-", "~"]:
                 symbol = self.tokenizer.symbol()
                 self.eat(symbol)
-                self.compile_expression()
+                self.compile_expression(greedy=False)
                 command = "neg" if symbol == "-" else "not"
                 self.writer.write_arithmetic(command)
             else:
@@ -920,8 +799,7 @@ class CompilationEngine():
             if self.tokenizer.symbol() == '(':
                 self.compile_expression(True)
             else:
-                raise Exception("There was '" + self.tokenizer.symbol() +
-                                "' after a valid operator symbol '" + op + "'.")
+                self.compile_term()
         else:
             self.compile_term()
 
